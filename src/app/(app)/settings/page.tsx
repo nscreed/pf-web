@@ -19,6 +19,7 @@ import { ProfileSection } from "@/components/settings/profile-section";
 import { ThemeSection } from "@/components/settings/theme-section";
 import { CategoriesSection } from "@/components/settings/categories-section";
 import { ExportSection } from "@/components/settings/export-section";
+import { CreditsSection } from "@/components/settings/credits-section";
 import { useAuth } from "@/providers/auth-provider";
 import apiClient from "@/lib/api-client";
 
@@ -63,6 +64,7 @@ export default function SettingsPage() {
         <ThemeSection />
         <CategoriesSection />
         <ExportSection />
+        <CreditsSection />
 
         {/* Account */}
         <Card>
