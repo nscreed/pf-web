@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { Sparkles, Loader2, RefreshCw, Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import apiClient from "@/lib/api-client";
+import { useAuth } from "@/providers/auth-provider";
+
+const COST = 5;
 
 interface AiInsightsProps {
   month: number;
@@ -13,30 +16,43 @@ interface AiInsightsProps {
 }
 
 export function AiInsights({ month, year, hasData }: AiInsightsProps) {
+  const { user, refreshUser } = useAuth();
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const credits = user?.credits ?? 0;
+  const canAfford = credits >= COST;
 
   const fetchInsights = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const { data } = await apiClient.get("/api/dashboard/insights", {
         params: { month, year },
       });
       const res = data.data ?? data;
       setInsights(res.insights || []);
-    } catch {
-      setInsights([]);
+      refreshUser();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.data?.message;
+      if (msg === "Insufficient credits") {
+        setError("Not enough credits");
+      } else {
+        setInsights([]);
+      }
     } finally {
       setLoading(false);
       setFetched(true);
     }
-  }, [month, year]);
+  }, [month, year, refreshUser]);
 
   // Reset when month changes
   useEffect(() => {
     setFetched(false);
     setInsights([]);
+    setError(null);
   }, [month, year]);
 
   if (!hasData) return null;
@@ -55,14 +71,27 @@ export function AiInsights({ month, year, hasData }: AiInsightsProps) {
               Get personalized tips based on your spending patterns
             </p>
           </div>
+          {error && (
+            <p className="text-xs text-destructive">{error}</p>
+          )}
           <Button
             size="sm"
             onClick={fetchInsights}
+            disabled={!canAfford}
             className="cursor-pointer gap-1.5"
           >
             <Sparkles className="h-3.5 w-3.5" />
             Analyze My Spending
+            <span className="flex items-center gap-0.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px]">
+              <Coins className="h-2.5 w-2.5" />
+              {COST}
+            </span>
           </Button>
+          {!canAfford && (
+            <p className="text-xs text-muted-foreground">
+              You need {COST} credits ({credits} available)
+            </p>
+          )}
         </CardContent>
       </Card>
     );
@@ -83,7 +112,7 @@ export function AiInsights({ month, year, hasData }: AiInsightsProps) {
   }
 
   // No insights returned
-  if (insights.length === 0) {
+  if (insights.length === 0 && !error) {
     return null;
   }
 
@@ -100,15 +129,20 @@ export function AiInsights({ month, year, hasData }: AiInsightsProps) {
             variant="ghost"
             size="icon-sm"
             onClick={fetchInsights}
-            disabled={loading}
+            disabled={loading || !canAfford}
             className="cursor-pointer"
-            title="Refresh insights"
+            title={`Refresh insights (${COST} credits)`}
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-3 pt-0">
+        {error && (
+          <p className="text-xs text-destructive">{error}</p>
+        )}
         {insights.map((insight, i) => (
           <div
             key={i}

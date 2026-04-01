@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Receipt, Plus, RefreshCw, Settings, LogOut } from "lucide-react";
+import { Home, Receipt, Plus, RefreshCw, Settings, LogOut, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
@@ -60,8 +60,16 @@ export function SidebarNav({ className }: { className?: string }) {
         })}
       </nav>
 
-      {/* User section */}
-      <div className="border-t p-4">
+      {/* Credits + User section */}
+      <div className="border-t p-4 space-y-3">
+        {user?.credits !== undefined && (
+          <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-medium">
+              {user.credits} credits
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
             <AvatarImage src={user?.picture} alt={user?.name} />

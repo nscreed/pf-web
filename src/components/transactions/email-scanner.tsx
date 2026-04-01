@@ -14,12 +14,21 @@ import {
   Undo2,
   AlertTriangle,
   CheckCircle2,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import apiClient from "@/lib/api-client";
 import { formatCurrency } from "@/lib/format-currency";
+import { useAuth } from "@/providers/auth-provider";
+
+const SCAN_COSTS: Record<string, number> = {
+  "this-month": 5,
+  "last-month": 5,
+  "last-3-months": 15,
+  "last-6-months": 25,
+};
 
 // ═══════════════════════════════════════════════════════
 // Types
@@ -230,6 +239,9 @@ export function EmailScanner({
 }: {
   onTransactionsChanged?: () => void;
 }) {
+  const { user, refreshUser } = useAuth();
+  const credits = user?.credits ?? 0;
+
   const [phase, setPhase] = useState<
     "idle" | "scanning" | "complete" | "imported"
   >("idle");
@@ -237,6 +249,9 @@ export function EmailScanner({
   const [selectedPeriod, setSelectedPeriod] =
     useState<ScanPeriod>("this-month");
   const [scanLabel, setScanLabel] = useState("");
+
+  const scanCost = SCAN_COSTS[selectedPeriod] ?? 5;
+  const canAfford = credits >= scanCost;
 
   // Live streaming state
   const [liveTransactions, setLiveTransactions] = useState<
@@ -296,7 +311,7 @@ export function EmailScanner({
       const token = getAccessToken();
 
       const response = await fetch(
-        `${API_URL}/api/email-parser/scan?dateFrom=${range.dateFrom}&dateTo=${range.dateTo}`,
+        `${API_URL}/api/email-parser/scan?dateFrom=${range.dateFrom}&dateTo=${range.dateTo}&period=${selectedPeriod}`,
         {
           headers: { Authorization: `Bearer ${token}` },
           signal: abortRef.current.signal,
@@ -402,6 +417,7 @@ export function EmailScanner({
         );
         setPhase("complete");
         if (data.totalAutoImported > 0) onTransactionsChanged?.();
+        refreshUser(); // Update credits display
         break;
 
       case "error":
@@ -542,6 +558,9 @@ export function EmailScanner({
               }`}
             >
               {label}
+              <span className="ml-1.5 opacity-60 text-[10px]">
+                {SCAN_COSTS[value]}c
+              </span>
             </button>
           ))}
         </div>
@@ -551,11 +570,21 @@ export function EmailScanner({
         <Button
           onClick={handleScan}
           size="lg"
+          disabled={!canAfford}
           className="cursor-pointer gap-2"
         >
           <Search className="h-4 w-4" />
           Scan {SCAN_PERIODS.find((p) => p.value === selectedPeriod)?.label}
+          <span className="flex items-center gap-0.5 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px]">
+            <Coins className="h-2.5 w-2.5" />
+            {scanCost}
+          </span>
         </Button>
+        {!canAfford && (
+          <p className="text-xs text-muted-foreground">
+            You need {scanCost} credits ({credits} available)
+          </p>
+        )}
       </div>
     );
   }

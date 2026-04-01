@@ -18,6 +18,7 @@ interface UserProfile {
   defaultCurrency: string;
   timezone: string;
   theme: string;
+  credits: number;
 }
 
 interface AuthContextType {
