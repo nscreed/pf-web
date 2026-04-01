@@ -43,7 +43,10 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch {
         setAccessToken(null);
-        if (typeof window !== "undefined") {
+        if (
+          typeof window !== "undefined" &&
+          !window.location.pathname.startsWith("/login")
+        ) {
           window.location.href = "/login";
         }
       }

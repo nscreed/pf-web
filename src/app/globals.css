@@ -117,6 +117,26 @@
   --sidebar-ring: hsl(224 76% 48%);
 }
 
+/* Theme: Natural (green) */
+[data-theme="natural"] {
+  --primary: hsl(142 71% 40%);
+  --primary-foreground: hsl(0 0% 100%);
+  --ring: hsl(142 71% 40%);
+  --chart-1: hsl(142 71% 40%);
+  --sidebar-primary: hsl(142 71% 40%);
+  --sidebar-ring: hsl(142 71% 40%);
+}
+
+/* Theme: Energetic (purple) */
+[data-theme="energetic"] {
+  --primary: hsl(262 83% 58%);
+  --primary-foreground: hsl(0 0% 100%);
+  --ring: hsl(262 83% 58%);
+  --chart-1: hsl(262 83% 58%);
+  --sidebar-primary: hsl(262 83% 58%);
+  --sidebar-ring: hsl(262 83% 58%);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
