@@ -56,6 +56,7 @@ export default function AdminPage() {
   const [grantAmount, setGrantAmount] = useState("");
   const [granting, setGranting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("requests");
 
   // Guard: redirect non-admins
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function AdminPage() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
-          <Tabs defaultValue="requests">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="requests" className="cursor-pointer gap-1.5">
                 <Coins className="h-3.5 w-3.5" />
@@ -257,6 +258,7 @@ export default function AdminPage() {
                           </th>
                           <th className="px-4 py-3 font-medium">Role</th>
                           <th className="px-4 py-3 font-medium">Joined</th>
+                          <th className="px-4 py-3 font-medium"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -279,6 +281,20 @@ export default function AdminPage() {
                             </td>
                             <td className="px-4 py-3 text-muted-foreground text-xs">
                               {new Date(u.createdAt).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setGrantUserId(String(u.id));
+                                  setActiveTab("grant");
+                                }}
+                                className="cursor-pointer text-xs gap-1"
+                              >
+                                <Gift className="h-3 w-3" />
+                                Grant
+                              </Button>
                             </td>
                           </tr>
                         ))}
@@ -303,21 +319,47 @@ export default function AdminPage() {
                       {message}
                     </p>
                   )}
-                  <div className="flex gap-3">
-                    <Input
-                      type="number"
-                      placeholder="User ID"
-                      value={grantUserId}
-                      onChange={(e) => setGrantUserId(e.target.value)}
-                      className="w-32"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Credits"
-                      value={grantAmount}
-                      onChange={(e) => setGrantAmount(e.target.value)}
-                      className="w-32"
-                    />
+
+                  {/* User select */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Select user</p>
+                    <div className="grid gap-2 max-h-60 overflow-y-auto rounded-lg border p-2">
+                      {users.map((u) => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => setGrantUserId(String(u.id))}
+                          className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer ${
+                            grantUserId === String(u.id)
+                              ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <div>
+                            <span className="font-medium">{u.name}</span>
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {u.email}
+                            </span>
+                          </div>
+                          <span className="text-xs tabular-nums font-medium text-muted-foreground">
+                            {u.credits}c
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Amount + Grant */}
+                  <div className="flex gap-3 items-end">
+                    <div className="space-y-2 flex-1">
+                      <p className="text-sm font-medium">Credits to grant</p>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 50"
+                        value={grantAmount}
+                        onChange={(e) => setGrantAmount(e.target.value)}
+                      />
+                    </div>
                     <Button
                       onClick={handleGrantCredits}
                       disabled={granting || !grantUserId || !grantAmount}
