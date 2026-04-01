@@ -2,11 +2,31 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Receipt, Plus, RefreshCw, Settings, LogOut, Sparkles, Shield } from "lucide-react";
+import {
+  Home,
+  Receipt,
+  Plus,
+  RefreshCw,
+  Settings,
+  LogOut,
+  Sparkles,
+  Shield,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
 import { useAuth } from "@/providers/auth-provider";
-import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -16,104 +36,125 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function SidebarNav({ className }: { className?: string }) {
+export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
   return (
-    <aside
-      className={cn(
-        "flex w-[240px] flex-col border-r bg-card",
-        className
-      )}
-    >
+    <Sidebar>
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2.5 border-b px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-xs text-primary-foreground">
-          PF
-        </div>
-        <span className="text-base font-semibold tracking-tight">
-          Personal Finance
-        </span>
-      </div>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-xs text-primary-foreground">
+                PF
+              </div>
+              <div className="flex flex-col gap-0.5 leading-none">
+                <span className="font-semibold">Personal Finance</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      {/* Nav items */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
+      <SidebarContent>
+        {/* Main nav */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    isActive={pathname === item.href}
+                    tooltip={item.label}
+                    render={<Link href={item.href} />}
+                  >
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Admin link */}
-      {user?.role === "admin" && (
-        <div className="px-3">
-          <Link
-            href="/admin"
-            className={cn(
-              "flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-              pathname === "/admin"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
-          >
-            <Shield className="h-5 w-5" />
-            Admin
-          </Link>
-        </div>
-      )}
-
-      {/* Credits + User section */}
-      <div className="border-t p-4 space-y-3">
-        {user?.credits !== undefined && (
-          <div className="flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            <span className="text-xs font-medium">
-              {user.credits} credits
-            </span>
-          </div>
+        {/* Admin */}
+        {user?.role === "admin" && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup>
+              <SidebarGroupLabel>Admin</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      isActive={pathname === "/admin"}
+                      tooltip="Admin Panel"
+                      render={<Link href="/admin" />}
+                    >
+                      <Shield />
+                      <span>Admin Panel</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.picture} alt={user?.name} />
-            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-              {user?.name?.[0]?.toUpperCase() ||
-                user?.email?.[0]?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium">
-              {user?.name || "User"}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {user?.email}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={logout}
-            className="h-9 w-9 cursor-pointer text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </aside>
+      </SidebarContent>
+
+      <SidebarFooter>
+        {/* Credits */}
+        {user?.credits !== undefined && (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip={`${user.credits} credits`}
+                render={<Link href="/settings" />}
+              >
+                <Sparkles />
+                <span>{user.credits} credits</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
+
+        <SidebarSeparator />
+
+        {/* User */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg">
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={user?.picture} alt={user?.name} />
+                <AvatarFallback className="rounded-lg bg-primary/10 text-primary text-sm font-medium">
+                  {user?.name?.[0]?.toUpperCase() ||
+                    user?.email?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">
+                  {user?.name || "User"}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {user?.email}
+                </span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={logout}
+              className="cursor-pointer"
+              tooltip="Logout"
+            >
+              <LogOut />
+              <span>Logout</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
