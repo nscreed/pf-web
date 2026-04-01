@@ -6,6 +6,7 @@ import { MonthSelector } from "@/components/dashboard/month-selector";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { ExpensePieChart } from "@/components/dashboard/expense-pie-chart";
 import { MonthlyBarChart } from "@/components/dashboard/monthly-bar-chart";
+import { AiInsights } from "@/components/dashboard/ai-insights";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -54,6 +55,12 @@ export default function DashboardPage() {
               <ExpensePieChart data={categories} />
               <MonthlyBarChart data={trend} />
             </div>
+
+            <AiInsights
+              month={month}
+              year={year}
+              hasData={categories.length > 0 || (summary?.monthlyExpense ?? 0) > 0}
+            />
           </>
         )}
       </div>
