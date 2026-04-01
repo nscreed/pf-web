@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,18 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { LogOut, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import {
+  LogOut,
+  Trash2,
+  Loader2,
+  AlertTriangle,
+  User,
+  Palette,
+  Tag,
+  Download,
+  Sparkles,
+  Shield,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProfileSection } from "@/components/settings/profile-section";
 import { ThemeSection } from "@/components/settings/theme-section";
@@ -53,69 +66,127 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title="Settings"
         subtitle="Manage your account and preferences."
       />
 
-      <div className="space-y-6 px-4 pb-8 lg:px-8">
-        <ProfileSection />
-        <ThemeSection />
-        <CategoriesSection />
-        <ExportSection />
-        <CreditsSection />
-
-        {/* Account */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
+      <div className="px-4 pb-8 lg:px-8">
+        {/* ── User card at top ── */}
+        <Card className="mb-6">
+          <CardContent className="flex items-center justify-between p-5">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-14 w-14">
                 <AvatarImage src={user?.picture} alt={user?.name} />
-                <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
                   {user?.name?.[0]?.toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-medium">{user?.name || "User"}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <h2 className="text-lg font-semibold">{user?.name || "User"}</h2>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                    {user?.credits ?? 0} credits
+                  </span>
+                  {user?.role === "admin" && (
+                    <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                      <Shield className="h-2.5 w-2.5" />
+                      Admin
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <Button
               variant="outline"
+              size="sm"
               onClick={logout}
-              className="cursor-pointer text-destructive hover:bg-destructive/10"
+              className="cursor-pointer gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/30"
             >
-              <LogOut className="mr-2 h-4 w-4" />
+              <LogOut className="h-4 w-4" />
               Logout
             </Button>
           </CardContent>
         </Card>
 
-        {/* Danger Zone */}
-        <Card className="border-destructive/30">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Permanently delete all your transactions, recurring rules, custom
-              categories, and email scan history. Your account and system
-              categories will be kept.
-            </p>
-            <Button
-              variant="destructive"
-              onClick={() => setConfirmOpen(true)}
-              className="cursor-pointer gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Erase All My Data
-            </Button>
-          </CardContent>
-        </Card>
+        {/* ── Tabbed sections ── */}
+        <Tabs defaultValue="general" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="general" className="cursor-pointer gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              General
+            </TabsTrigger>
+            <TabsTrigger value="categories" className="cursor-pointer gap-1.5">
+              <Tag className="h-3.5 w-3.5" />
+              Categories
+            </TabsTrigger>
+            <TabsTrigger value="credits" className="cursor-pointer gap-1.5">
+              <Sparkles className="h-3.5 w-3.5" />
+              Credits
+            </TabsTrigger>
+            <TabsTrigger value="data" className="cursor-pointer gap-1.5">
+              <Download className="h-3.5 w-3.5" />
+              Data
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ── General ── */}
+          <TabsContent value="general" className="space-y-6">
+            <ProfileSection />
+            <ThemeSection />
+          </TabsContent>
+
+          {/* ── Categories ── */}
+          <TabsContent value="categories">
+            <CategoriesSection />
+          </TabsContent>
+
+          {/* ── Credits ── */}
+          <TabsContent value="credits">
+            <CreditsSection />
+          </TabsContent>
+
+          {/* ── Data ── */}
+          <TabsContent value="data" className="space-y-6">
+            <ExportSection />
+
+            {/* Danger Zone */}
+            <Card className="border-destructive/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription>
+                  Irreversible actions that affect all your data.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between rounded-lg border border-destructive/20 p-4">
+                  <div>
+                    <p className="text-sm font-medium">Erase all data</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Delete all transactions, recurring rules, custom
+                      categories, and scan history.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmOpen(true)}
+                    className="cursor-pointer gap-2 shrink-0 ml-4"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Erase All
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* ── Confirmation dialog ── */}
@@ -182,10 +253,7 @@ export default function SettingsPage() {
                 { label: "Categories", value: eraseResult.categories },
                 { label: "Scan records", value: eraseResult.scannedEmails },
               ].map(({ label, value }) => (
-                <div
-                  key={label}
-                  className="rounded-lg bg-muted px-3 py-2"
-                >
+                <div key={label} className="rounded-lg bg-muted px-3 py-2">
                   <p className="text-lg font-semibold tabular-nums">{value}</p>
                   <p className="text-[11px] text-muted-foreground">{label}</p>
                 </div>
