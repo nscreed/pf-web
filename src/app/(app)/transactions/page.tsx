@@ -17,7 +17,7 @@ import { useCategories } from "@/hooks/use-categories";
 
 export default function TransactionsPage() {
   const [filters, setFilters] = useState<FilterParams>({});
-  const { transactions, loading, hasMore, loadMore } = useTransactions(filters);
+  const { transactions, loading, hasMore, loadMore, refresh } = useTransactions(filters);
   const { categories } = useCategories();
 
   return (
@@ -71,7 +71,7 @@ export default function TransactionsPage() {
           </TabsContent>
 
           <TabsContent value="smart-import">
-            <EmailScanner />
+            <EmailScanner onTransactionsChanged={refresh} />
           </TabsContent>
         </Tabs>
       </div>

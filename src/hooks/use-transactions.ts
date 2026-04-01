@@ -37,6 +37,7 @@ interface UseTransactionsResult {
   loading: boolean;
   hasMore: boolean;
   loadMore: () => void;
+  refresh: () => void;
 }
 
 const LIMIT = 30;
@@ -101,5 +102,11 @@ export function useTransactions(filters: FilterParams): UseTransactionsResult {
     fetchPage(nextPage, true);
   }
 
-  return { transactions, loading, hasMore, loadMore };
+  function refresh() {
+    setPage(1);
+    setHasMore(true);
+    fetchPage(1, false);
+  }
+
+  return { transactions, loading, hasMore, loadMore, refresh };
 }
