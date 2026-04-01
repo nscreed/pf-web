@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Receipt, Plus, RefreshCw, Settings, LogOut, Sparkles } from "lucide-react";
+import { Home, Receipt, Plus, RefreshCw, Settings, LogOut, Sparkles, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
@@ -59,6 +59,24 @@ export function SidebarNav({ className }: { className?: string }) {
           );
         })}
       </nav>
+
+      {/* Admin link */}
+      {user?.role === "admin" && (
+        <div className="px-3">
+          <Link
+            href="/admin"
+            className={cn(
+              "flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+              pathname === "/admin"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+            )}
+          >
+            <Shield className="h-5 w-5" />
+            Admin
+          </Link>
+        </div>
+      )}
 
       {/* Credits + User section */}
       <div className="border-t p-4 space-y-3">

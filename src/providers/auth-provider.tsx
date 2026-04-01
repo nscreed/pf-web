@@ -19,6 +19,7 @@ interface UserProfile {
   timezone: string;
   theme: string;
   credits: number;
+  role: string;
 }
 
 interface AuthContextType {
