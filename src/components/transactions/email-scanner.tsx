@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Loader2, Check, X, Import, Search } from "lucide-react";
+import {
+  Mail,
+  Loader2,
+  Check,
+  Import,
+  Search,
+  Shield,
+  CreditCard,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +24,27 @@ interface ParsedTransaction {
   note: string;
   date: string;
   source: string;
+  confidence: number;
+  merchant?: string;
+  transactionRef?: string;
+  counterParty?: string;
+  cardEnding?: string;
+  balanceAfter?: number;
+}
+
+function ConfidenceDot({ value }: { value: number }) {
+  const color =
+    value >= 90
+      ? "bg-green-500"
+      : value >= 70
+        ? "bg-yellow-500"
+        : "bg-orange-500";
+  return (
+    <span
+      className={`inline-block h-2 w-2 rounded-full ${color}`}
+      title={`${value}% confidence`}
+    />
+  );
 }
 
 export function EmailScanner() {
@@ -23,24 +53,37 @@ export function EmailScanner() {
   const [parsed, setParsed] = useState<ParsedTransaction[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [scanned, setScanned] = useState(false);
-  const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [result, setResult] = useState<{
+    imported: number;
+    skipped: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleScan() {
     setScanning(true);
     setError(null);
-    setImportedCount(null);
+    setResult(null);
     try {
       const { data } = await apiClient.get("/api/email-parser/scan", {
         params: { days: 30 },
       });
       const txns = data.data?.transactions ?? data.transactions ?? [];
       setParsed(txns);
-      setSelected(new Set(txns.map((_: unknown, i: number) => i)));
+      // Auto-select high confidence (>=70) items
+      setSelected(
+        new Set(
+          txns
+            .map((t: ParsedTransaction, i: number) =>
+              t.confidence >= 70 ? i : -1,
+            )
+            .filter((i: number) => i >= 0),
+        ),
+      );
       setScanned(true);
     } catch (err: any) {
       const msg =
-        err.response?.data?.message || "Failed to scan emails. Try re-logging in.";
+        err.response?.data?.message ||
+        "Failed to scan emails. Try re-logging in.";
       setError(msg);
     } finally {
       setScanning(false);
@@ -52,12 +95,16 @@ export function EmailScanner() {
     if (items.length === 0) return;
 
     setImporting(true);
+    setError(null);
     try {
       const { data } = await apiClient.post("/api/email-parser/import", {
         transactions: items,
       });
-      const count = data.data?.imported ?? data.imported ?? 0;
-      setImportedCount(count);
+      const res = data.data ?? data;
+      setResult({
+        imported: res.imported ?? 0,
+        skipped: res.skipped ?? 0,
+      });
       setParsed([]);
       setSelected(new Set());
     } catch {
@@ -84,27 +131,52 @@ export function EmailScanner() {
     }
   }
 
-  // Initial state — not scanned yet
+  // ─── Initial state ─────────────────────────────
   if (!scanned) {
     return (
-      <div className="flex flex-col items-center gap-6 py-16 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-          <Mail className="h-8 w-8 text-primary" />
+      <div className="flex flex-col items-center gap-8 py-16 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
+          <Mail className="h-10 w-10 text-primary" />
         </div>
-        <div>
-          <h3 className="text-lg font-semibold">Smart Email Import</h3>
-          <p className="mt-1 max-w-md text-sm text-muted-foreground">
-            Scan your Gmail for bKash, Nagad, bank alerts, and subscription
-            emails. We&apos;ll find transactions and let you review before
-            importing.
+        <div className="max-w-lg">
+          <h3 className="text-xl font-semibold">Smart Email Import</h3>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            Automatically find transactions from your Gmail — bKash, Nagad,
+            Rocket, bank alerts, credit card charges, subscriptions, and more.
+            You review everything before importing.
           </p>
         </div>
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
+
+        <div className="grid gap-3 text-left max-w-md w-full">
+          {[
+            {
+              icon: Shield,
+              text: "Read-only access — we never send or modify emails",
+            },
+            {
+              icon: CreditCard,
+              text: "Detects bKash, Nagad, Rocket, 30+ BD banks, credit cards",
+            },
+            {
+              icon: RefreshCw,
+              text: "Auto-categorizes: Food, Transport, Bills, Shopping, etc.",
+            },
+          ].map(({ icon: Icon, text }) => (
+            <div key={text} className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/5">
+                <Icon className="h-4 w-4 text-primary" />
+              </div>
+              <span className="text-sm text-muted-foreground">{text}</span>
+            </div>
+          ))}
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
         <Button
           onClick={handleScan}
           disabled={scanning}
+          size="lg"
           className="cursor-pointer gap-2"
         >
           {scanning ? (
@@ -112,21 +184,21 @@ export function EmailScanner() {
           ) : (
             <Search className="h-4 w-4" />
           )}
-          {scanning ? "Scanning emails..." : "Scan Last 30 Days"}
+          {scanning ? "Scanning your emails..." : "Scan Last 30 Days"}
         </Button>
       </div>
     );
   }
 
-  // Scanned but nothing found
-  if (parsed.length === 0 && importedCount === null) {
+  // ─── Nothing found ─────────────────────────────
+  if (parsed.length === 0 && !result) {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
-        <Mail className="h-12 w-12 text-muted-foreground/40" />
+        <Mail className="h-12 w-12 text-muted-foreground/30" />
         <div>
           <h3 className="text-lg font-semibold">No transactions found</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            We couldn&apos;t find any transaction emails in the last 30 days.
+            No matching emails in the last 30 days.
           </p>
         </div>
         <Button
@@ -140,8 +212,8 @@ export function EmailScanner() {
     );
   }
 
-  // Import success
-  if (importedCount !== null) {
+  // ─── Import success ────────────────────────────
+  if (result) {
     return (
       <div className="flex flex-col items-center gap-4 py-16 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
@@ -149,38 +221,40 @@ export function EmailScanner() {
         </div>
         <div>
           <h3 className="text-lg font-semibold">
-            {importedCount} transaction{importedCount !== 1 ? "s" : ""} imported
+            {result.imported} transaction
+            {result.imported !== 1 ? "s" : ""} imported
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            They&apos;re now in your transaction list.
-          </p>
+          {result.skipped > 0 && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {result.skipped} skipped (duplicates or no matching category)
+            </p>
+          )}
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setScanned(false);
-              setImportedCount(null);
-            }}
-            className="cursor-pointer"
-          >
-            Scan Again
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setScanned(false);
+            setResult(null);
+          }}
+          className="cursor-pointer"
+        >
+          Scan Again
+        </Button>
       </div>
     );
   }
 
-  // Show parsed results for review
+  // ─── Review parsed results ─────────────────────
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-medium">
-            Found {parsed.length} transaction{parsed.length !== 1 ? "s" : ""}
+            Found {parsed.length} transaction
+            {parsed.length !== 1 ? "s" : ""}
           </h3>
           <p className="text-xs text-muted-foreground">
-            Select which ones to import. Duplicates are auto-skipped.
+            High-confidence items are pre-selected. Review and import.
           </p>
         </div>
         <div className="flex gap-2">
@@ -213,17 +287,18 @@ export function EmailScanner() {
       <div className="space-y-2">
         {parsed.map((txn, i) => (
           <Card
-            key={i}
-            className={`cursor-pointer transition-colors ${
+            key={`${txn.transactionRef || i}-${txn.date}`}
+            className={`cursor-pointer transition-all ${
               selected.has(i)
                 ? "border-primary/40 bg-primary/5"
-                : "opacity-50"
+                : "opacity-40"
             }`}
             onClick={() => toggleItem(i)}
           >
-            <CardContent className="flex items-center gap-3 p-3">
+            <CardContent className="flex items-start gap-3 p-3">
+              {/* Checkbox */}
               <div
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
                   selected.has(i)
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border"
@@ -232,7 +307,9 @@ export function EmailScanner() {
                 {selected.has(i) && <Check className="h-3 w-3" />}
               </div>
 
+              {/* Content */}
               <div className="flex-1 min-w-0">
+                {/* Row 1: Note + Source badge + Confidence */}
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium truncate">
                     {txn.note}
@@ -240,27 +317,56 @@ export function EmailScanner() {
                   <Badge variant="outline" className="shrink-0 text-[10px]">
                     {txn.source}
                   </Badge>
+                  <ConfidenceDot value={txn.confidence} />
                 </div>
-                <div className="flex items-center gap-2 mt-0.5">
+
+                {/* Row 2: Meta info */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
                   <span className="text-xs text-muted-foreground">
                     {txn.date}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] px-1.5 py-0"
+                  >
                     {txn.categoryHint}
-                  </span>
+                  </Badge>
+                  {txn.merchant && txn.merchant !== txn.source && (
+                    <span className="text-xs text-muted-foreground">
+                      {txn.merchant}
+                    </span>
+                  )}
+                  {txn.cardEnding && (
+                    <span className="text-xs text-muted-foreground">
+                      Card ****{txn.cardEnding}
+                    </span>
+                  )}
+                  {txn.transactionRef && (
+                    <span className="text-xs text-muted-foreground/50 font-mono">
+                      {txn.transactionRef}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <span
-                className={`text-sm font-semibold whitespace-nowrap ${
-                  txn.type === "income"
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {txn.type === "income" ? "+" : "-"}
-                {formatCurrency(txn.amount)}
-              </span>
+              {/* Amount */}
+              <div className="text-right shrink-0">
+                <span
+                  className={`text-sm font-semibold ${
+                    txn.type === "income"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {txn.type === "income" ? "+" : "-"}
+                  {formatCurrency(txn.amount)}
+                </span>
+                {txn.balanceAfter !== undefined && (
+                  <div className="text-[10px] text-muted-foreground/50">
+                    Bal: {formatCurrency(txn.balanceAfter)}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
