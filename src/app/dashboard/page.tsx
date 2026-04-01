@@ -55,7 +55,12 @@ export default function DashboardPage() {
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
-          <h1 className="text-xl font-bold text-primary">PF</h1>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-bold text-xs text-primary-foreground">
+              PF
+            </div>
+            <span className="text-base font-semibold tracking-tight">Personal Finance</span>
+          </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
