@@ -42,7 +42,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      {/* ── Header / Brand ── */}
+      {/* ── Brand ── */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -59,7 +59,7 @@ export function AppSidebar() {
                   Personal Finance
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {user?.email}
+                  Track your money
                 </span>
               </div>
             </SidebarMenuButton>
@@ -67,10 +67,11 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* ── Main Navigation ── */}
+      {/* ── Content ── */}
       <SidebarContent>
+        {/* Main */}
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNav.map((item) => (
@@ -89,7 +90,38 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* ── Admin ── */}
+        {/* Preferences */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Preferences</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={`${user?.credits ?? 0} credits`}
+                  render={<Link href="/settings" />}
+                >
+                  <Sparkles />
+                  <span>Credits</span>
+                </SidebarMenuButton>
+                {user?.credits !== undefined && (
+                  <SidebarMenuBadge>{user.credits}</SidebarMenuBadge>
+                )}
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={pathname === "/settings"}
+                  tooltip="Settings"
+                  render={<Link href="/settings" />}
+                >
+                  <Settings />
+                  <span>Settings</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Admin */}
         {user?.role === "admin" && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
@@ -109,42 +141,9 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
-
-        {/* Spacer — pushes settings & footer down */}
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {/* Credits */}
-              {user?.credits !== undefined && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip={`${user.credits} credits`}
-                    render={<Link href="/settings" />}
-                  >
-                    <Sparkles />
-                    <span>Credits</span>
-                  </SidebarMenuButton>
-                  <SidebarMenuBadge>{user.credits}</SidebarMenuBadge>
-                </SidebarMenuItem>
-              )}
-
-              {/* Settings */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={pathname === "/settings"}
-                  tooltip="Settings"
-                  render={<Link href="/settings" />}
-                >
-                  <Settings />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
-      {/* ── Footer / User ── */}
+      {/* ── Footer ── */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
