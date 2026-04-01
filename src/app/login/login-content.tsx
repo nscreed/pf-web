@@ -2,24 +2,26 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getGoogleLoginUrl, getToken, setToken } from "@/lib/auth";
+import { getGoogleLoginUrl, setAccessToken } from "@/lib/api-client";
+import { useAuth } from "@/providers/auth-provider";
 
 export default function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, loading, refreshUser } = useAuth();
 
   useEffect(() => {
-    if (getToken()) {
+    if (!loading && user) {
       router.replace("/dashboard");
       return;
     }
 
     const token = searchParams.get("token");
     if (token) {
-      setToken(token);
-      router.replace("/dashboard");
+      setAccessToken(token);
+      refreshUser().then(() => router.replace("/dashboard"));
     }
-  }, [router, searchParams]);
+  }, [router, searchParams, user, loading, refreshUser]);
 
   return (
     <div className="flex flex-1 min-h-screen">
