@@ -270,11 +270,23 @@ export function EmailScanner() {
     const sources = ["bKash", "Nagad", "Rocket", "BRAC Bank", "Netflix", "Daraz"];
 
     const runStep = () => {
-      if (step >= SCAN_STEPS.length) return;
+      if (step >= SCAN_STEPS.length) {
+        // All steps done — wait for API if not ready yet, then finish
+        const waitForApi = () => {
+          if (apiDone.current) {
+            finishScan();
+          } else {
+            setTimeout(waitForApi, 300);
+          }
+        };
+        waitForApi();
+        return;
+      }
+
       setScanStep(step);
 
       // Simulate email count climbing
-      const targetCount = Math.floor((step / SCAN_STEPS.length) * 150);
+      const targetCount = Math.floor(((step + 1) / SCAN_STEPS.length) * 150);
       const countInterval = setInterval(() => {
         setEmailCount((prev) => {
           if (prev >= targetCount) {
@@ -289,15 +301,6 @@ export function EmailScanner() {
       if (step === 2) setDetectedSources((prev) => [...prev, sources[0], sources[1], sources[2]]);
       if (step === 3) setDetectedSources((prev) => [...prev, sources[3]]);
       if (step === 4) setDetectedSources((prev) => [...prev, sources[4], sources[5]]);
-
-      // If API is done and we're at step 6+, jump to end
-      if (apiDone.current && step >= 6) {
-        setScanStep(SCAN_STEPS.length - 1);
-        setTimeout(() => {
-          finishScan();
-        }, 600);
-        return;
-      }
 
       step++;
       setTimeout(runStep, SCAN_STEPS[step - 1].duration);
