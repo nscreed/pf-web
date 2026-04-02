@@ -9,16 +9,19 @@ import { PageHeader } from "@/components/layout/page-header";
 import { FilterBar } from "@/components/transactions/filter-bar";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { EmailScanner } from "@/components/transactions/email-scanner";
+import { RecurringList } from "@/components/recurring/recurring-list";
 import {
   useTransactions,
   type FilterParams,
 } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
+import { useRecurring } from "@/hooks/use-recurring";
 
 export default function TransactionsPage() {
   const [filters, setFilters] = useState<FilterParams>({});
   const { transactions, loading, hasMore, loadMore, refresh } = useTransactions(filters);
   const { categories } = useCategories();
+  const { rules, loading: recurringLoading, toggle, remove } = useRecurring();
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -65,9 +68,13 @@ export default function TransactionsPage() {
           </TabsContent>
 
           <TabsContent value="recurring">
-            <p className="py-12 text-center text-sm text-muted-foreground">
-              Recurring transactions coming soon.
-            </p>
+            <RecurringList
+              rules={rules}
+              loading={recurringLoading}
+              onToggle={toggle}
+              onDelete={remove}
+              onEdit={() => window.location.href = "/recurring"}
+            />
           </TabsContent>
 
           <TabsContent value="smart-import">
